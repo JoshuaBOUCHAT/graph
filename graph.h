@@ -3,13 +3,15 @@
 
 #include <stdbool.h>
 
-typedef struct _egde_t {
+typedef struct _egde_t
+{
   int vertex;
   int next;
 
 } edge_t;
 
-typedef struct graph {
+typedef struct graph
+{
   int nb_vertices;
   int nb_edges;
   /// contain the edges (allocation)
@@ -29,4 +31,6 @@ void display_graph(graph *p_graph);
 
 /// retourn le tableau de précédence
 int *bfs(graph *p_graph, int first_vertex);
+
+int *shortest_path(graph *p_graph, int src, int dest, int *size);
 #endif
