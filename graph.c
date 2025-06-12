@@ -1,5 +1,6 @@
 #include "graph.h"
 #include "queue.h"
+#include "heap.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -8,7 +9,7 @@
 
 #define BUFFER_SIZE 1024
 
-graph *new_graph(bool oriented, int nb_vertices, int nb_edges)
+graph *new_graph(bool oriented, int nb_vertices, int nb_edges, int weighted)
 {
   graph *p_graph = malloc(sizeof(graph));
   if (!p_graph)
@@ -30,6 +31,20 @@ graph *new_graph(bool oriented, int nb_vertices, int nb_edges)
   {
     goto graph_alloc_vertices;
   }
+  p_graph->weighted = weighted;
+  if (weighted)
+  {
+    p_graph->weights = malloc(total_nb_edges * sizeof(double));
+    if (p_graph == NULL)
+    {
+      goto graph_alloc_weigth;
+    }
+  }
+  else
+  {
+    p_graph->weights = NULL;
+  }
+
   for (int i = 0; i < nb_vertices; i++)
   {
     p_graph->vertices[i] = -1;
@@ -38,19 +53,26 @@ graph *new_graph(bool oriented, int nb_vertices, int nb_edges)
   p_graph->oriented = oriented;
   p_graph->nb_edges = nb_edges;
   p_graph->nb_vertices = nb_vertices;
+
+  printf("allocated ! \n");
   return p_graph;
 
+graph_alloc_weigth:
+  free(p_graph->vertices);
 graph_alloc_vertices:
   free(p_graph->edges);
-
 graph_alloc_edges:
   free(p_graph);
-
 graph_alloc_error:
+  printf("graph allocation failed!\n");
   return NULL;
 }
 void free_graph(graph *p_graph)
 {
+  if (p_graph->weighted)
+  {
+    free(p_graph->weights);
+  }
   free(p_graph->edges);
   free(p_graph->vertices);
   free(p_graph);
@@ -77,6 +99,13 @@ void insert_single_edge(graph *p_graph, int source, int destination,
   }
   p_graph->edges[index].next = insert_index;
 }
+void insert_single_weighted_edge(graph *p_graph, int source, int destination,
+                                 int insert_index, double weigth)
+{
+  insert_single_edge(p_graph, source, destination, insert_index);
+  p_graph->weights[insert_index] = weigth;
+}
+
 void insert_edge(graph *p_graph, int source, int destination,
                  int insert_index)
 {
@@ -84,6 +113,15 @@ void insert_edge(graph *p_graph, int source, int destination,
   if (!p_graph->oriented)
   {
     insert_single_edge(p_graph, source, destination, insert_index + 1);
+  }
+}
+void insert_weighted_edge(graph *p_graph, int source, int destination,
+                          int insert_index, double weigth)
+{
+  insert_single_weighted_edge(p_graph, source, destination, insert_index, weigth);
+  if (!p_graph->oriented)
+  {
+    insert_single_weighted_edge(p_graph, source, destination, insert_index + 1, weigth);
   }
 }
 
@@ -104,6 +142,7 @@ graph *from_file(const char *filename)
   int nb_vertices = -1;
   int nb_edges = -1;
   int oriented = -1;
+  int weighted = -1;
   bool edges_section_found = false;
 
   while ((fgets(line, sizeof(line), file)))
@@ -114,6 +153,8 @@ graph *from_file(const char *filename)
       continue;
     if (sscanf(line, "ORIENTED %d\n", &oriented))
       continue;
+    if (sscanf(line, "WEIGHTED %d\n", &weighted))
+      continue;
     if (strcmp(line, "#EDGES#\n") == 0)
     {
       edges_section_found = true;
@@ -121,13 +162,14 @@ graph *from_file(const char *filename)
     }
   }
   if (!edges_section_found || nb_vertices <= 0 || nb_edges <= 0 ||
-      (oriented != 0 && oriented != 1))
+      (oriented != 0 && oriented != 1) || (weighted != 0 && weighted != 1))
   {
+    printf("Wrong graph variable !\n");
     goto reading_error;
   }
   // now every variable is define we allocate and then fill
 
-  graph *p_graph = new_graph(oriented, nb_vertices, nb_edges);
+  graph *p_graph = new_graph(oriented, nb_vertices, nb_edges, weighted);
   if (p_graph == NULL)
   {
     goto reading_error;
@@ -139,14 +181,29 @@ graph *from_file(const char *filename)
     {
       goto after_graph_alloc_error;
     }
+
     int source, destination;
-    if (sscanf(line, "%d;%d\n", &source, &destination) != 2)
+    if (weighted)
     {
-      goto after_graph_alloc_error;
+      double weigth;
+      if (sscanf(line, "%d;%d;%lf\n", &source, &destination, &weigth) != 3)
+      {
+        goto after_graph_alloc_error;
+      }
+      // ici on multiplie par deux l'index d'insertion si c'est un graph non
+      // orienté car on ajoute les arrète 2 par 2
+      insert_weighted_edge(p_graph, source, destination, i << (!p_graph->oriented), weigth);
     }
-    // ici on multiplie par deux l'index d'insertion si c'est un graph non
-    // orienté car on ajoute les arrète 2 par 2
-    insert_edge(p_graph, source, destination, i << (!p_graph->oriented));
+    else
+    {
+      if (sscanf(line, "%d;%d\n", &source, &destination) != 2)
+      {
+        goto after_graph_alloc_error;
+      }
+      // ici on multiplie par deux l'index d'insertion si c'est un graph non
+      // orienté car on ajoute les arrète 2 par 2
+      insert_edge(p_graph, source, destination, i << (!p_graph->oriented));
+    }
   }
 
   return p_graph;
@@ -165,7 +222,7 @@ void display_graph(graph *p_graph)
     printf("Graphe invalide.\n");
     return;
   }
-
+  bool weithed = p_graph->weighted;
   for (int i = 0; i < p_graph->nb_vertices; i++)
   {
     int index = p_graph->vertices[i];
@@ -178,7 +235,15 @@ void display_graph(graph *p_graph)
     while (index != -1)
     {
       edge_t e = p_graph->edges[index];
-      printf("%d ", e.vertex);
+      if (weithed)
+      {
+        printf("%d(%lf) ", e.vertex, p_graph->weights[index]);
+      }
+      else
+      {
+        printf("%d ", e.vertex);
+      }
+
       index = e.next;
     }
     putchar('\n');
@@ -241,8 +306,7 @@ void reverse_array(int *arr, int len)
     arr[idy--] = temp;
   }
 }
-
-int *shortest_path(graph *p_graph, int src, int dest, int *size)
+int *non_weighted_shortest_path(graph *p_graph, int src, int dest, int *size)
 {
   int *parents = bfs(p_graph, src);
   if (parents == NULL)
@@ -280,3 +344,17 @@ int *shortest_path(graph *p_graph, int src, int dest, int *size)
   *size = stack_index;
   return stack;
 }
+
+int *shortest_path(graph *p_graph, int src, int dest, int *size, double *total_weight)
+{
+  if (!p_graph->weighted)
+  {
+    return non_weighted_shortest_path(p_graph, src, dest, size);
+  }
+  else
+  {
+    // TODO:
+    return NULL;
+  }
+}
+heap_node *dijkstra(graph *p_graph, int src, int dest, int *size, double *total_weight) {}

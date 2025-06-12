@@ -19,6 +19,9 @@ typedef struct graph
   /// point to the first edge_t related to edge[i]
   int *vertices;
 
+  double *weights;
+  bool weighted;
+
   bool oriented;
 
 } graph;
@@ -32,5 +35,5 @@ void display_graph(graph *p_graph);
 /// retourn le tableau de précédence
 int *bfs(graph *p_graph, int first_vertex);
 
-int *shortest_path(graph *p_graph, int src, int dest, int *size);
+int *shortest_path(graph *p_graph, int src, int dest, int *size, double *);
 #endif
