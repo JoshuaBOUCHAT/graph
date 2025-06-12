@@ -1,4 +1,5 @@
 #include "graph.h"
+#include "queue.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -21,9 +22,12 @@ graph *new_graph(bool oriented, int nb_vertices, int nb_edges) {
     goto graph_alloc_edges;
   }
 
-  p_graph->vertices = malloc(nb_vertices * sizeof(int *));
+  p_graph->vertices = malloc(nb_vertices * sizeof(int));
   if (!p_graph->vertices) {
     goto graph_alloc_vertices;
+  }
+  for (int i = 0; i < nb_vertices; i++) {
+    p_graph->vertices[i] = -1;
   }
 
   p_graph->oriented = oriented;
@@ -40,6 +44,11 @@ graph_alloc_edges:
 graph_alloc_error:
   return NULL;
 }
+void free_graph(graph *p_graph) {
+  free(p_graph->edges);
+  free(p_graph->vertices);
+  free(p_graph);
+}
 
 void insert_single_edge(graph *p_graph, int source, int destination,
                         int insert_index) {
@@ -47,16 +56,17 @@ void insert_single_edge(graph *p_graph, int source, int destination,
   p_edge->vertex = destination;
   p_edge->next = -1;
 
-  edge_t *current = p_graph->edges + p_graph->vertices[source];
-  if (current == NULL) {
+  int index = p_graph->vertices[source];
+
+  if (index == -1) {
     p_graph->vertices[source] = insert_index;
     return;
   }
 
-  while ((current->next != -1)) {
-    current = p_graph->edges + current->next;
+  while ((p_graph->edges[index].next != -1)) {
+    index = p_graph->edges[index].next;
   }
-  current->next = insert_index;
+  p_graph->edges[index].next = insert_index;
 }
 void insert_edge(graph *p_graph, int source, int destination,
                  int insert_index) {
@@ -72,10 +82,9 @@ graph *from_file(const char *filename) {
     goto file_error;
   }
   char line[BUFFER_SIZE];
-  int byte_read = -1;
 
   // on s'assure que le fichier est bien un graph via une balise
-  if (!fgets(line, sizeof(line), file) || sscanf(line, "#GRAPH#")) {
+  if (!fgets(line, sizeof(line), file) || strcmp(line, "#GRAPH#\n") != 0) {
     goto reading_error;
   }
   int nb_vertices = -1;
@@ -84,13 +93,13 @@ graph *from_file(const char *filename) {
   bool edges_section_found = false;
 
   while ((fgets(line, sizeof(line), file))) {
-    if (sscanf(line, "NB_VERTICE %d\n", &nb_vertices))
+    if (sscanf(line, "NB_VERTICES %d\n", &nb_vertices))
       continue;
     if (sscanf(line, "NB_EDGES %d\n", &nb_edges))
       continue;
-    if (sscanf(line, "NB_VERTICE %d\n", &nb_vertices))
+    if (sscanf(line, "ORIENTED %d\n", &oriented))
       continue;
-    if (sscanf(line, "#EDGES#\n")) {
+    if (strcmp(line, "#EDGES#\n") == 0) {
       edges_section_found = true;
       break;
     }
@@ -122,15 +131,64 @@ graph *from_file(const char *filename) {
   return p_graph;
 
 after_graph_alloc_error:
-  free(p_graph);
+  free_graph(p_graph);
 reading_error:
   fclose(file);
 file_error:
   return NULL;
 }
+void display_graph(graph *p_graph) {
+  if (!p_graph || !p_graph->vertices || !p_graph->edges) {
+    printf("Graphe invalide.\n");
+    return;
+  }
 
-void free_graph(graph *p_graph) {
-  free(p_graph->edges);
-  free(p_graph->vertices);
-  free(p_graph);
+  for (int i = 0; i < p_graph->nb_vertices; i++) {
+    int index = p_graph->vertices[i];
+    if (index == -1) {
+      printf("%d -> /\n", i);
+      continue;
+    }
+    printf("%d -> ", i);
+    while (index != -1) {
+      edge_t e = p_graph->edges[index];
+      printf("%d ", e.vertex);
+      index = e.next;
+    }
+    putchar('\n');
+  }
+}
+int *bfs(graph *p_graph, int first_vertex) {
+  int nb_vertices = p_graph->nb_vertices;
+
+  queue queue;
+  if (queue_with_capacity(&queue, nb_vertices) == NULL) {
+    return NULL;
+  }
+
+  int *parent = malloc(nb_vertices * sizeof(int));
+  if (parent == NULL) {
+    free_queue(&queue);
+    return NULL;
+  }
+
+  for (int i = 0; i < nb_vertices; i++) {
+    parent[i] = -1;
+  }
+  parent[first_vertex] = first_vertex;
+
+  enqueue(&queue, first_vertex);
+  while (!is_empty(&queue)) {
+    int current = dequeue(&queue);
+    int index = p_graph->vertices[current];
+    while (index != -1) {
+      edge_t edge = p_graph->edges[index];
+      if (parent[edge.vertex] == -1) {
+        parent[edge.vertex] = current;
+        enqueue(&queue, edge.vertex);
+      }
+      index = edge.next;
+    }
+  }
+  return parent;
 }

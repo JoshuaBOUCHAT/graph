@@ -25,5 +25,8 @@ typedef struct graph {
 /// error occurs
 graph *from_file(const char *filename);
 void free_graph(graph *p_graph);
+void display_graph(graph *p_graph);
 
+/// retourn le tableau de précédence
+int *bfs(graph *p_graph, int first_vertex);
 #endif
