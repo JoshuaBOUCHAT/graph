@@ -4,11 +4,12 @@
 #include "stdbool.h"
 #include <stdlib.h>
 
-typedef struct queue {
-  int *inner;
-  int size;
-  int head;
-  int tail;
+typedef struct
+{
+    int *inner;
+    int size;
+    int head;
+    int tail;
 } queue;
 
 bool enqueue(queue *p_queue, int data);

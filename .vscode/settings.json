@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "queue.h": "c",
-        "ios": "c"
+        "ios": "c",
+        "heap.h": "c",
+        "iterator": "c"
     }
 }

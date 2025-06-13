@@ -1,28 +1,28 @@
-#ifndef GRAPH
-#define GRAPH
+#ifndef GRAPH_H
+#define GRAPH_H
 
 #include <stdbool.h>
 
-typedef struct _egde_t
+typedef struct
 {
-  int vertex;
-  int next;
+    int vertex;
+    int next;
 
 } edge_t;
 
-typedef struct graph
+typedef struct
 {
-  int nb_vertices;
-  int nb_edges;
-  /// contain the edges (allocation)
-  edge_t *edges;
-  /// point to the first edge_t related to edge[i]
-  int *vertices;
+    int nb_vertices;
+    int nb_edges;
+    /// contain the edges (allocation)
+    edge_t *edges;
+    /// point to the first edge_t related to edge[i]
+    int *vertices;
 
-  double *weights;
-  bool weighted;
+    double *weights;
+    bool weighted;
 
-  bool oriented;
+    bool oriented;
 
 } graph;
 

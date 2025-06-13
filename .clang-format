@@ -1,4 +1,11 @@
 BasedOnStyle: LLVM
-BraceWrapping:
-  AfterFunction: false
-  AfterControlStatement: false
+IndentWidth: 4
+UseTab: Never
+BreakBeforeBraces: Allman
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortCaseLabelsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+RequireBraces: Always
+ColumnLimit: 100
