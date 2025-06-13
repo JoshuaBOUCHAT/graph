@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define BUFFER_SIZE 1024
+const double inifity_plus = 1.0 / 0.0;
 
 graph *new_graph(bool oriented, int nb_vertices, int nb_edges, int weighted) {
   graph *p_graph = malloc(sizeof(graph));
@@ -302,4 +303,45 @@ int *shortest_path(graph *p_graph, int src, int dest, int *size,
   }
 }
 heap_node *dijkstra(graph *p_graph, int src, int dest, int *size,
-                    double *total_weight) {}
+                    double *total_weight) {
+  int nb_vertices = p_graph->nb_vertices;
+  double *distances = malloc(sizeof(double) * nb_vertices);
+  if (distances == NULL) {
+    printf("impossible to malloc distances in dijkstra !\n");
+    return NULL;
+  }
+  heap heap;
+  if (heap_with_capacity(&heap, nb_vertices) == NULL) {
+    printf("heap allocation failed !\n");
+    free(distances);
+    return NULL;
+  }
+  for (int i = 0; i < nb_vertices; i++) {
+    distances[i] = inifity_plus;
+  }
+
+  distances[src] = 0;
+  push_from_value(&heap, src, 0.0F);
+  heap_node current_node;
+  while (!is_heap_empty(&heap)) {
+    current_node = pop(&heap);
+    if (current_node.vertex == dest) {
+      break;
+    }
+    if (current_node.distance > distances[current_node.vertex]) {
+      continue;
+    }
+    int edge_index = p_graph->vertices[current_node.vertex];
+    edge_t current_edge;
+    while (edge_index != -1) {
+      current_edge = p_graph->edges[edge_index];
+      double edge_weight = p_graph->weights[edge_index];
+      double temp_dist = edge_weight + current_node.distance;
+      if (temp_dist < distances[current_edge.vertex]) {
+        distances[current_edge.vertex] = temp_dist;
+        push_from_value(&heap, current_edge.vertex, temp_dist);
+      }
+      edge_index = current_edge.next;
+    }
+  }
+}

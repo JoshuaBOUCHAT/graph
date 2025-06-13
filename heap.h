@@ -19,4 +19,11 @@ heap_node pop(heap *p_heap);
 void push(heap *p_heap, heap_node node);
 bool is_heap_empty(heap *p_heap);
 bool is_heap_full(heap *p_heap);
+inline void push_from_value(heap *p_heap, int vertex, double distance) {
+  heap_node node = {
+      .vertex = vertex,
+      .distance = distance,
+  };
+  push(p_heap, node);
+}
 #endif
