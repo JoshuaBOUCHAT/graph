@@ -22,16 +22,6 @@ heap_node pop(heap *p_heap);
 void push(heap *p_heap, heap_node node);
 bool is_heap_empty(heap *p_heap);
 bool is_heap_full(heap *p_heap);
-inline void push_from_value(heap *p_heap, int index, double distance)
-{
-    heap_node node = {
-        .index = index,
-        .distance = distance,
-    };
-    push(p_heap, node);
-}
-inline void free_heap(heap *p_heap)
-{
-    free(p_heap->inner);
-}
+void push_from_value(heap *p_heap, int index, double distance);
+void free_heap(heap *p_heap);
 #endif

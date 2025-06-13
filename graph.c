@@ -37,7 +37,7 @@ graph *new_graph(bool oriented, int nb_vertices, int nb_edges, int weighted)
     if (weighted)
     {
         p_graph->weights = malloc(total_nb_edges * sizeof(double));
-        if (p_graph == NULL)
+        if (p_graph->weights == NULL)
         {
             goto graph_alloc_weigth;
         }
@@ -80,7 +80,7 @@ void free_graph(graph *p_graph)
     free(p_graph);
 }
 
-inline void insert_single_edge(graph *p_graph, int source, int destination, int insert_index)
+void insert_single_edge(graph *p_graph, int source, int destination, int insert_index)
 {
     edge_t *p_edge = p_graph->edges + insert_index;
     p_edge->vertex = destination;
@@ -100,28 +100,28 @@ inline void insert_single_edge(graph *p_graph, int source, int destination, int 
     }
     p_graph->edges[index].next = insert_index;
 }
-inline void insert_single_weighted_edge(graph *p_graph, int source, int destination,
+void insert_single_weighted_edge(graph *p_graph, int source, int destination,
                                         int insert_index, double weigth)
 {
     insert_single_edge(p_graph, source, destination, insert_index);
     p_graph->weights[insert_index] = weigth;
 }
 
-inline void insert_edge(graph *p_graph, int source, int destination, int insert_index)
+void insert_edge(graph *p_graph, int source, int destination, int insert_index)
 {
     insert_single_edge(p_graph, source, destination, insert_index);
     if (!p_graph->oriented)
     {
-        insert_single_edge(p_graph, source, destination, insert_index + 1);
+        insert_single_edge(p_graph, destination, source, insert_index + 1);
     }
 }
-inline void insert_weighted_edge(graph *p_graph, int source, int destination, int insert_index,
+void insert_weighted_edge(graph *p_graph, int source, int destination, int insert_index,
                                  double weigth)
 {
     insert_single_weighted_edge(p_graph, source, destination, insert_index, weigth);
     if (!p_graph->oriented)
     {
-        insert_single_weighted_edge(p_graph, source, destination, insert_index + 1, weigth);
+        insert_single_weighted_edge(p_graph, destination , source, insert_index + 1, weigth);
     }
 }
 graph *init_graph_from_file(FILE *file, char *line, int line_size)
@@ -164,6 +164,7 @@ graph *init_graph_from_file(FILE *file, char *line, int line_size)
 }
 bool parse_edges(graph *p_graph, FILE *file, char *line, int line_size)
 {
+
     for (int i = 0; i < p_graph->nb_edges; i++)
     {
         if (fgets(line, line_size, file) == NULL)
@@ -361,7 +362,11 @@ int *non_weighted_shortest_path(graph *p_graph, int src, int dest, int *size)
     *size = stack_index;
     return stack;
 }
+int *dijkstra(graph *p_graph, int src, int dest, int *size, double *total_weight);
 
+
+
+///size * is used to return the length of path and total_weight is used when the graph is weighted
 int *shortest_path(graph *p_graph, int src, int dest, int *size, double *total_weight)
 {
     if (!p_graph->weighted)
@@ -370,8 +375,7 @@ int *shortest_path(graph *p_graph, int src, int dest, int *size, double *total_w
     }
     else
     {
-        // TODO:
-        return NULL;
+        return dijkstra(p_graph, src, dest, size, total_weight);
     }
 }
 

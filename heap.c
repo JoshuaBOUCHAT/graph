@@ -50,7 +50,10 @@ void sift_down(heap *p_heap, int root)
         printf("Tentative de siftdown sur heap null !\n");
         exit(EXIT_FAILURE);
     }
-    if (root < 0 || root >= p_heap->nb_node)
+    if (p_heap->nb_node<2){
+        return;
+    }
+    if ( root >= p_heap->nb_node)
     {
         printf("Sift down appeler un mauvais root: %d, nb_node:%d", root, p_heap->nb_node);
         exit(EXIT_FAILURE);
@@ -161,4 +164,16 @@ void push(heap *p_heap, heap_node node)
     p_heap->inner[p_heap->nb_node] = node;
     sift_up(p_heap, p_heap->nb_node);
     p_heap->nb_node++;
+}
+void push_from_value(heap *p_heap, int index, double distance)
+{
+    heap_node node = {
+        .index = index,
+        .distance = distance,
+    };
+    push(p_heap, node);
+}
+void free_heap(heap *p_heap)
+{
+    free(p_heap->inner);
 }
