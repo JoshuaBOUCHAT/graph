@@ -36,4 +36,7 @@ void display_graph(graph *p_graph);
 int *bfs(graph *p_graph, int first_vertex);
 
 int *shortest_path(graph *p_graph, int src, int dest, int *size, double *);
+
+graph *minimum_spaning(graph *p_graph);
+
 #endif

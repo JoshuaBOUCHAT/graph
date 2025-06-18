@@ -2,6 +2,7 @@
 #include "heap.h"
 #include "queue.h"
 
+#include <cerrno>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -487,4 +488,40 @@ int *dijkstra(graph *p_graph, int src, int dest, int *size, double *total_weight
     free_heap(&heap);
 
     return path;
+}
+
+
+typedef  struct {
+    int src;
+    int dest;
+    double weight;
+}kruskal_edge;
+
+
+kruskal_edge *get_graph_edges(graph * p_graph){
+    kruskal_edge * edges=malloc(p_graph->nb_edges*sizeof(kruskal_edge));
+
+}
+
+
+graph *minimum_spaning(graph *p_graph){
+    if(p_graph==NULL){
+        printf("Passing null graph in minimum_spaning !\n");
+        return NULL;
+    }
+    if(!p_graph->weighted ){
+        perror("calling minimum_spaning on non weighted graph \n");
+        return NULL;
+    }
+
+    if(p_graph->oriented){
+        //TODO
+        perror("Message not implemented");
+        exit(EXIT_FAILURE);
+    }
+
+    // on allou le nouveau graph
+    //pour conect N sommet on à besoins de N-1 arrete
+    graph * p_minimal=new_graph(false, p_graph->nb_vertices, p_graph->nb_edges,true);
+
 }
