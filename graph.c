@@ -503,7 +503,7 @@ int sort_kruskal_edge(const void *p_edge1, const void *p_edge2)
     return (edge1->weight > edge2->weight) - (edge1->weight < edge2->weight);
 }
 
-kruskal_edge *get_graph_edges(graph *p_graph)
+kruskal_edge *get_edges(graph *p_graph)
 {
 
     // optional check to be 100% safe
@@ -543,6 +543,16 @@ kruskal_edge *get_graph_edges(graph *p_graph)
     }
     return edges;
 }
+static inline kruskal_edge *get_sorted_edges(graph *p_graph)
+{
+    kruskal_edge* edges=get_edges(p_graph);
+    if (edges)
+    {
+        qsort(edges, sizeof(kruskal_edge) * p_graph->nb_edges, p_graph->nb_edges, sort_kruskal_edge);
+    }
+    return edges;
+}
+
 
 /// @brief assum that the graph is weighted and not oriented
 /// @param p_graph
@@ -558,13 +568,13 @@ graph *kruskal(graph *p_graph)
         printf("Impossible d'initialiser le graph couvrant de poids minimal !\n");
         return NULL;
     }
-    kruskal_edge *edges = get_graph_edges(p_graph);
-    if (edges == NULL)
+    kruskal_edge *sorted_edges = get_sorted_edges(p_graph);
+    if (sorted_edges == NULL)
     {
         free_graph(p_minimal);
         return NULL;
     }
-    qsort(edges, sizeof(kruskal_edge) * p_graph->nb_edges, p_graph->nb_edges, sort_kruskal_edge);
+    
 }
 
 graph *minimum_spaning(graph *p_graph)
