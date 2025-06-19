@@ -30,6 +30,7 @@ heap *heap_with_capacity(heap *p_heap, int capacity)
 
     return p_heap;
 }
+
 bool swap_if_greater(heap *p_heap, int root, int min)
 {
     if (p_heap->inner[root].distance < p_heap->inner[min].distance)
@@ -50,10 +51,11 @@ void sift_down(heap *p_heap, int root)
         printf("Tentative de siftdown sur heap null !\n");
         exit(EXIT_FAILURE);
     }
-    if (p_heap->nb_node<2){
+    if (p_heap->nb_node < 2)
+    {
         return;
     }
-    if ( root >= p_heap->nb_node)
+    if (root >= p_heap->nb_node)
     {
         printf("Sift down appeler un mauvais root: %d, nb_node:%d", root, p_heap->nb_node);
         exit(EXIT_FAILURE);
@@ -83,6 +85,7 @@ void sift_down(heap *p_heap, int root)
         return;
     }
 }
+
 void sift_up(heap *p_heap, int root)
 {
     if (root < 1)
@@ -110,6 +113,7 @@ bool is_heap_full(heap *p_heap)
     }
     return p_heap->nb_node == p_heap->capacity;
 }
+
 bool is_heap_empty(heap *p_heap)
 {
     if (p_heap == NULL)
@@ -137,6 +141,7 @@ heap_node pop(heap *p_heap)
     sift_down(p_heap, 0);
     return temp;
 }
+
 heap_node *upgrade_capacity(heap *p_heap)
 {
     int capacity = p_heap->capacity;
@@ -153,18 +158,17 @@ void push(heap *p_heap, heap_node node)
         printf("Le program a essayer de push sur in heap NULL !\n");
         exit(EXIT_FAILURE);
     }
-    if (is_heap_full(p_heap))
+    if (is_heap_full(p_heap) && upgrade_capacity(p_heap) == NULL)
     {
-        if (upgrade_capacity(p_heap) == NULL)
-        {
-            printf("Impossible de resize le heap !\n");
-            exit(EXIT_FAILURE);
-        }
+
+        printf("Impossible de resize le heap !\n");
+        exit(EXIT_FAILURE);
     }
     p_heap->inner[p_heap->nb_node] = node;
     sift_up(p_heap, p_heap->nb_node);
     p_heap->nb_node++;
 }
+
 void push_from_value(heap *p_heap, int index, double distance)
 {
     heap_node node = {
@@ -173,6 +177,7 @@ void push_from_value(heap *p_heap, int index, double distance)
     };
     push(p_heap, node);
 }
+
 void free_heap(heap *p_heap)
 {
     free(p_heap->inner);

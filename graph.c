@@ -101,8 +101,8 @@ void insert_single_edge(graph *p_graph, int source, int destination, int insert_
     }
     p_graph->edges[index].next = insert_index;
 }
-void insert_single_weighted_edge(graph *p_graph, int source, int destination,
-                                        int insert_index, double weigth)
+void insert_single_weighted_edge(graph *p_graph, int source, int destination, int insert_index,
+                                 double weigth)
 {
     insert_single_edge(p_graph, source, destination, insert_index);
     p_graph->weights[insert_index] = weigth;
@@ -117,12 +117,12 @@ void insert_edge(graph *p_graph, int source, int destination, int insert_index)
     }
 }
 void insert_weighted_edge(graph *p_graph, int source, int destination, int insert_index,
-                                 double weigth)
+                          double weigth)
 {
     insert_single_weighted_edge(p_graph, source, destination, insert_index, weigth);
     if (!p_graph->oriented)
     {
-        insert_single_weighted_edge(p_graph, destination , source, insert_index + 1, weigth);
+        insert_single_weighted_edge(p_graph, destination, source, insert_index + 1, weigth);
     }
 }
 graph *init_graph_from_file(FILE *file, char *line, int line_size)
@@ -365,9 +365,7 @@ int *non_weighted_shortest_path(graph *p_graph, int src, int dest, int *size)
 }
 int *dijkstra(graph *p_graph, int src, int dest, int *size, double *total_weight);
 
-
-
-///size * is used to return the length of path and total_weight is used when the graph is weighted
+/// size * is used to return the length of path and total_weight is used when the graph is weighted
 int *shortest_path(graph *p_graph, int src, int dest, int *size, double *total_weight)
 {
     if (!p_graph->weighted)
@@ -490,38 +488,103 @@ int *dijkstra(graph *p_graph, int src, int dest, int *size, double *total_weight
     return path;
 }
 
-
-typedef  struct {
+typedef struct
+{
     int src;
     int dest;
     double weight;
-}kruskal_edge;
+} kruskal_edge;
 
+int sort_kruskal_edge(const void *p_edge1, const void *p_edge2)
+{
+    const kruskal_edge *edge1 = (const kruskal_edge *)p_edge1;
+    const kruskal_edge *edge2 = (const kruskal_edge *)p_edge2;
 
-kruskal_edge *get_graph_edges(graph * p_graph){
-    kruskal_edge * edges=malloc(p_graph->nb_edges*sizeof(kruskal_edge));
-
+    return (edge1->weight > edge2->weight) - (edge1->weight < edge2->weight);
 }
 
+kruskal_edge *get_graph_edges(graph *p_graph)
+{
 
-graph *minimum_spaning(graph *p_graph){
-    if(p_graph==NULL){
+    // optional check to be 100% safe
+    if (!p_graph->vertices || !p_graph->edges || !p_graph->weights)
+    {
+        return NULL;
+    }
+    kruskal_edge *edges = malloc(p_graph->nb_edges * sizeof(kruskal_edge));
+    if (edges == NULL)
+    {
+        perror("Allocation failed in get_graph_edges when allocating edges \n");
+        return NULL;
+    }
+    int edges_index = 0;
+    for (int i = 0; i < p_graph->nb_vertices; i++)
+    {
+        int index = p_graph->vertices[i];
+        while (index != -1)
+        {
+            edge_t edge = p_graph->edges[index];
+
+            kruskal_edge to_insert;
+            to_insert.src = i;
+            to_insert.dest = edge.vertex;
+            to_insert.weight = p_graph->weights[index];
+            edges[edges_index++] = to_insert;
+
+            index = edge.next;
+        }
+    }
+    if (edges_index != p_graph->nb_edges)
+    {
+        printf("Number of edges inside the graph: %d ne corespond pas au nombre indiqué %d !\n",
+               edges_index, p_graph->nb_edges);
+        free(edges);
+        return NULL;
+    }
+    return edges;
+}
+
+/// @brief assum that the graph is weighted and not oriented
+/// @param p_graph
+/// @return NULL on error and a new allocated graph represententing the minimal spaning sub-tree of
+/// the the param
+graph *kruskal(graph *p_graph)
+{
+    // on allou le nouveau graph
+    // pour conect N sommet on à besoins de N-1 arrete
+    graph *p_minimal = new_graph(false, p_graph->nb_vertices, p_graph->nb_edges, true);
+    if (p_minimal == NULL)
+    {
+        printf("Impossible d'initialiser le graph couvrant de poids minimal !\n");
+        return NULL;
+    }
+    kruskal_edge *edges = get_graph_edges(p_graph);
+    if (edges == NULL)
+    {
+        free_graph(p_minimal);
+        return NULL;
+    }
+    qsort(edges, sizeof(kruskal_edge) * p_graph->nb_edges, p_graph->nb_edges, sort_kruskal_edge);
+}
+
+graph *minimum_spaning(graph *p_graph)
+{
+    if (p_graph == NULL)
+    {
         printf("Passing null graph in minimum_spaning !\n");
         return NULL;
     }
-    if(!p_graph->weighted ){
+    if (!p_graph->weighted)
+    {
         perror("calling minimum_spaning on non weighted graph \n");
         return NULL;
     }
 
-    if(p_graph->oriented){
-        //TODO
+    if (p_graph->oriented)
+    {
+        // TODO
         perror("Message not implemented");
         exit(EXIT_FAILURE);
     }
-
-    // on allou le nouveau graph
-    //pour conect N sommet on à besoins de N-1 arrete
-    graph * p_minimal=new_graph(false, p_graph->nb_vertices, p_graph->nb_edges,true);
-
+    return kruskal(p_graph);
 }

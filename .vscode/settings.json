@@ -3,6 +3,8 @@
         "queue.h": "c",
         "ios": "c",
         "heap.h": "c",
-        "iterator": "c"
+        "iterator": "c",
+        "stdbool.h": "c",
+        "chrono": "c"
     }
 }
